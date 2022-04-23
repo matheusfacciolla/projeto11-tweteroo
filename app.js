@@ -1,16 +1,11 @@
-import express from "express";
+import express, { json } from "express";
 import cors from "cors";
 import chalk from "chalk";
 
 const app = express();
 
 app.use(cors());
-app.use(
-    express.urlencoded({
-        extended: true
-    })
-);
-app.use(express.json());
+app.use(json());
 
 const users = [];
 const tweets = [];
@@ -35,13 +30,15 @@ app.post("/sign-up", (req, res) => {
 });
 
 app.post("/tweets", (req, res) => {
-    const { username, tweet, avatar } = req.body;
+    const { tweet } = req.body;
+    const { username } = req.headers.user;
+    const findUser = users.find((user) => user.username === username);
 
-    if (username && tweet) {
+    if (tweet) {
         tweets.push({
             username: username,
             tweet: tweet,
-            avatar: avatar
+            avatar: findUser.avatar
         });
         res.status(201).send("OK");
     } else {
@@ -50,10 +47,24 @@ app.post("/tweets", (req, res) => {
 });
 
 app.get("/tweets", (req, res) => {
-    const newTenTweets = tweets.slice(-10).reverse();
-    res.status(200).send(newTenTweets);
+    const { page } = req.query;
+    const newTenTweets = tweets.slice(-((page - 0) * 10)).reverse();
+
+    if (page > 0 && page * 10 - newTenTweets.length <= 10) {
+        res.status(200).send(newTenTweets);
+    } else {
+        res.status(400).send('Informe uma página válida!');
+    }
+});
+
+app.get('/tweets/:id', (req, res) => {
+    const { id } = req.params;
+    const userTweets = users.filter((user) => user.username === id);
+    const newUserTenTweets = userTweets.slice(-10).reverse();
+
+    res.status(200).send(newUserTenTweets);
 });
 
 app.listen(5000, () => {
-    console.log(chalk.bold.green(`Application working at http://localhost:5000`))
+    console.log(chalk.bold.green(`Server is running at http://localhost:5000`))
 });
