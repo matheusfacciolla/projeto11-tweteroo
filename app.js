@@ -48,10 +48,19 @@ app.post("/tweets", (req, res) => {
 
 app.get("/tweets", (req, res) => {
     const { page } = req.query;
-    const newTenTweets = tweets.slice(-((page - 0) * 10)).reverse();
+    const limit = 10;
 
-    if (page > 0 && page * 10 - newTenTweets.length <= 10) {
-        res.status(200).send(newTenTweets);
+    if (page > 0 && page * limit - tweets.length <= limit) {
+        let tenTweets = [];
+
+        for (let i = tweets.length - limit * (page - 1); i > tweets.length - limit - (limit * (page - 1)); i--) {
+            const tweet = tweets[i];
+
+            if (tweet) {
+                tenTweets.push(tweet);
+            }
+        }
+        res.status(200).send(tenTweets);
     } else {
         res.status(400).send('Informe uma página válida!');
     }
@@ -59,7 +68,7 @@ app.get("/tweets", (req, res) => {
 
 app.get('/tweets/:id', (req, res) => {
     const { id } = req.params;
-    const userTweets = users.filter((user) => user.username === id);
+    const userTweets = tweets.filter((tweet) => tweet.username === id);
     const newUserTenTweets = userTweets.slice(-10).reverse();
 
     res.status(200).send(newUserTenTweets);
